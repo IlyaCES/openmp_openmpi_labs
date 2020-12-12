@@ -1,0 +1,26 @@
+double a[N];
+double y,x;
+# pragma omp parallel for
+for (int i=0; i<N; i++)
+{
+  y = i*sin(i/N*3.14);
+  x = i*cos(i/N*3.14);
+  a[i] = y+x;
+}
+
+В этом участке кода x и y являются общими (shared) переменными, т.к. объявлены снаружи параллельной секции. Поэтому получается race condition. Нужно явно указать x и y private или объявить их внутри секции.
+Внутри i/N*3.14 (i/N) получается 0, т.к. i и N инты, поэтому нужно сконвертировать их к double.
+
+
+Исправленный вариант:
+
+double a[N];
+double y,x;
+# pragma omp parallel for private(x, y)
+for (int i=0; i<N; i++)
+{
+  y = i*sin((static_cast<double>(i)/N)*3.14);
+  x = i*cos((static_cast<double>(i)/N)*3.14);
+  a[i] = y+x;
+}
+
